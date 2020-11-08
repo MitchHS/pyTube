@@ -4,8 +4,15 @@ from pytube import YouTube
 import logging
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+import ffmpeg
 
 logging.basicConfig(level=logging.INFO)
+
+
+def combine(audio_file, video_file, output):
+    video_stream = ffmpeg.input(video_file)
+    audio_stream = ffmpeg.input(audio_file)
+    out = ffmpeg.output(audio_stream, video_stream, 'out.mp4').run()
 
 
 def isNone(obj):
@@ -36,7 +43,6 @@ def get_yt(url):
     return yt
 
 
-
 @click.command()
 @click.argument('url', required=True, type=click.STRING)
 @click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd())
@@ -48,14 +54,11 @@ def main(outputDir, url):
     yt = None
 
     # Reattempts
-    while yt is None:
+    if yt is None:
         try:
-            yt = getyt(url)
+            yt = get_yt(url)
         except Exception as e:
             logging.info("Error retrieving youtube info for URL: " + url + "\n Retrying...")
-            yt = None
-
-
 
     download(yt, outputDir)
 
