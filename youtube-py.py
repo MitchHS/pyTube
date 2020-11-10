@@ -17,9 +17,9 @@ def combine(audio_file, video_file, output):
 
 def isNone(obj):
     if obj is None:
-        return False
-    else:
         return True
+    else:
+        return False
 
 
 def validateUrl(url):
@@ -31,11 +31,34 @@ def validateUrl(url):
         raise ValueError("URL provided is invalid " + url) from exc
 
 
-def download(yt, outputDir):
-    logging.info('Downloading ' + yt.title + " to " + outputDir)
-    stream = (yt.streams.filter(adaptive=True))
-    for vid in stream:
-        print(vid)
+def download(yt, outputDir, quality):
+
+    if not isNone(quality):
+        stream_video = (yt.streams.filter(only_video=True, adaptive=True, res=quality, mime_type='video/mp4'))
+
+        if len(stream_video) < 1:
+            logging.info("Error: Nothing found for quality " + quality)
+            return
+        else:
+            logging.info('Downloading ' + yt.title + " to " + outputDir)
+            print(str(stream_video[0]))
+            if 'ime_type="video/mp4' in str(stream_video[0]):
+                logging.info('Downloading video codec')
+                # stream_video[0].download(outputDir)
+                stream_audio = yt.streams.filter(only_audio=True, mime_type='audio/mp4')
+                print(stream_audio)
+                if len(stream_audio) < 1:
+                    logging.info('Cannot find mp4 audio codec to download')
+                    return
+                else:
+                    logging.info('Downloading audio codec')
+                    stream_audio[0].download(outputDir)
+
+
+             
+        
+
+    # Check arguments for None inputs
 
 
 def get_yt(url):
@@ -45,8 +68,9 @@ def get_yt(url):
 
 @click.command()
 @click.argument('url', required=True, type=click.STRING)
-@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd())
-def main(outputDir, url):
+@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd(), type=click.Path(exists=True))
+@click.option('-q', '--quality', 'quality', required=False, default='720p', show_default=True, help='Quality of stream to download. Example: 1080p')
+def main(outputDir, url, quality):
     # Validate URL
     logging.info('Starting... ')
     logging.debug("output dir: " + outputDir)
@@ -54,13 +78,13 @@ def main(outputDir, url):
     yt = None
 
     # Reattempts
-    if yt is None:
+    while yt is None:
         try:
             yt = get_yt(url)
         except Exception as e:
             logging.info("Error retrieving youtube info for URL: " + url + "\n Retrying...")
 
-    download(yt, outputDir)
+    download(yt, outputDir, quality)
 
 
 # Main
