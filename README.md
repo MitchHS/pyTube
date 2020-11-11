@@ -2,7 +2,9 @@
 Python command line tool to download youtube videos
 
 
-Usage: youtube-py.py [OPTIONS] URL
+# Usage: 
+
+youtube-py.py [OPTIONS] URL
 
 Options:
 
