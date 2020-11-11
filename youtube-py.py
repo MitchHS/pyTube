@@ -126,7 +126,8 @@ def get_yt(url):
 
 @click.command()
 @click.argument('url', required=True, type=click.STRING)
-@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd() + '/', type=click.Path(exists=True))
+@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd() + '/', show_default=True,
+              type=click.Path(exists=True), help='Output directory of download')
 @click.option('-q', '--quality', 'quality', required=False, default='720p', show_default=True,
               help='Quality of stream to download. Example: 1080p')
 def main(outputDir, url, quality):
