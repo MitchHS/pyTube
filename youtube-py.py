@@ -4,19 +4,21 @@ from pytube import YouTube
 import logging
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-import ffmpeg
 from pathlib import Path
+import ffmpeg
 
 logging.basicConfig(level=logging.INFO)
 
 
 def combine(audio_file, video_file, output):
+    # Combines audio and video streams and outputs to dir
     video_stream = ffmpeg.input(video_file)
     audio_stream = ffmpeg.input(audio_file)
-    out = ffmpeg.output(audio_stream, video_stream, str(output)).run()
+    ffmpeg.output(audio_stream, video_stream, str(output)).run()
 
 
 def isNone(obj):
+    # Simple is none
     if obj is None:
         return True
     else:
@@ -24,6 +26,7 @@ def isNone(obj):
 
 
 def progress_function(stream, chunk, bytes_remaining):
+    # Callback function for download
     total_size = stream.filesize
     bytes_downloaded = total_size - bytes_remaining
     percentage_of_completion = bytes_downloaded / total_size * 100
@@ -65,6 +68,8 @@ def download(yt, outputDir, quality):
     # Replace characters that cause issues with file names / dir
     title = yt.title.replace(' ', '')
     title = title.replace('/', '')
+    title = title.replace('(', '')
+    title = title.replace(')', '')
     # File Names
     video_dir = outputDir + title + '_video'
     audio_dir = outputDir + title + '_audio'
@@ -92,8 +97,19 @@ def download(yt, outputDir, quality):
                     # Raw file directory
                     video_file = Path(video_dir + '.mp4')
                     audio_file = Path(audio_dir + '.mp4')
+                    vid_input = ffmpeg.input(video_file)
+                    audio_input = ffmpeg.input(audio_file)
+
                     if video_file.is_file() and audio_file.is_file():
-                        print('hit')
+                        # combine(audio_file, video_file, outputDir + title + '.mp4')
+                        cmd = 'ffmpeg -i ' + str(video_file) + ' -i ' + str(audio_file) + ' -c copy ' + str(
+                            outputDir) + title + '.mp4'
+                        print(cmd)
+                        os.system(cmd)
+                        # os.system('ffmpeg -i ' + str(video_file) + ' -i ' + str(audio_file) + ' -c copy ' + str(outputDir) + title + '.mp4')
+                        os.remove(video_file)
+                        os.remove(audio_file)
+                    # ffmpeg.output(audio_file, video_file, 'out.mp4').run()
                     else:
                         raise FileNotFoundError('Video / Audio file cannot be found to process. Check output directory')
                         return
@@ -110,7 +126,7 @@ def get_yt(url):
 
 @click.command()
 @click.argument('url', required=True, type=click.STRING)
-@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd(), type=click.Path(exists=True))
+@click.option('--output', '-o', 'outputDir', required=False, default=os.getcwd() + '/', type=click.Path(exists=True))
 @click.option('-q', '--quality', 'quality', required=False, default='720p', show_default=True,
               help='Quality of stream to download. Example: 1080p')
 def main(outputDir, url, quality):
