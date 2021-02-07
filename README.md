@@ -1,4 +1,4 @@
-# pyTube
+# youtube-py
 Python command line tool to download youtube videos
 Currently running of python version 3.8, haven't tested other versions.
 
